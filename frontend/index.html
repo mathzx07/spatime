@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SpaTime — MVP</title>
+
+<script src="vendor/react.development.js"></script>
+<script src="vendor/react-dom.development.js"></script>
+<script src="vendor/babel.min.js"></script>
+<script src="config.js"></script>
+
+<style>
+  :root {
+    --sage: #7fa88a;
+    --sage-dark: #5f8a71;
+    --client: #4a7fb5;
+    --client-dark: #386590;
+    --admin: #c98a2e;
+    --admin-dark: #a86f1e;
+    --danger: #c05a5a;
+    --danger-dark: #a4453f;
+    --bg: #f7f4ef;
+    --card: #ffffff;
+    --border: #e2ddd3;
+    --text: #29332c;
+    --text-muted: #6b6357;
+    --ok: #5aa06a;
+    --pending: #d99a3a;
+    --cancel: #b0574f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  #root { min-height: 100vh; display: flex; flex-direction: column; }
+
+  .navbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.9rem 1.6rem;
+    background: var(--client);
+    transition: background 0.25s ease;
+  }
+  .navbar.zona-admin { background: var(--admin); }
+  .navbar .logo { color: #fff; font-weight: 700; font-size: 1.25rem; letter-spacing: 0.2px; }
+  .navbar nav { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .navbar button.navlink {
+    background: transparent; border: none; color: rgba(255,255,255,0.85);
+    font-size: 0.92rem; padding: 0.4rem 0.7rem; border-radius: 6px; cursor: pointer;
+  }
+  .navbar button.navlink:hover { background: rgba(255,255,255,0.12); color: #fff; }
+  .navbar button.navlink.active { background: rgba(255,255,255,0.22); color: #fff; font-weight: 600; }
+  .navbar .admin-link { border-left: 1px solid rgba(255,255,255,0.35); margin-left: 0.4rem; padding-left: 0.8rem; }
+
+  main { flex: 1; padding: 2rem 1.6rem 3rem; max-width: 880px; margin: 0 auto; width: 100%; }
+
+  h1 { font-size: 1.7rem; margin: 0 0 0.3rem; }
+  h2 { font-size: 1.35rem; margin: 0 0 1.1rem; }
+  p.subtitle { color: var(--text-muted); margin: 0 0 1.6rem; }
+
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 1.3rem 1.4rem; margin-bottom: 1rem;
+  }
+
+  .btn {
+    display: inline-block; border: none; border-radius: 8px; padding: 0.65rem 1.3rem;
+    font-size: 0.95rem; font-weight: 600; cursor: pointer; color: #fff; transition: opacity 0.15s;
+  }
+  .btn:hover { opacity: 0.9; }
+  .btn:active { opacity: 0.8; }
+  .btn-sage { background: var(--sage); }
+  .btn-client { background: var(--client); }
+  .btn-admin { background: var(--admin); }
+  .btn-danger { background: var(--danger); }
+  .btn-outline {
+    background: transparent; color: var(--text); border: 1px solid var(--border);
+  }
+  .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.82rem; }
+  .btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+  .hero { text-align: center; padding: 2.2rem 1rem; }
+  .hero h1 { color: var(--sage-dark); font-size: 2.1rem; }
+  .hero-actions { display: flex; gap: 0.8rem; justify-content: center; margin-top: 1.5rem; flex-wrap: wrap; }
+
+  .servicio-card { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+  .servicio-card h3 { margin: 0 0 0.25rem; font-size: 1.05rem; }
+  .servicio-card p { margin: 0 0 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+  .servicio-meta { font-size: 0.85rem; color: var(--text-muted); }
+  .servicio-precio { font-weight: 700; color: var(--client); margin-top: 0.2rem; }
+
+  form .campo { margin-bottom: 1.05rem; }
+  form label { display: block; font-weight: 600; font-size: 0.88rem; margin-bottom: 0.35rem; }
+  form input, form select {
+    width: 100%; padding: 0.6rem 0.7rem; border-radius: 7px; border: 1px solid var(--border);
+    font-size: 0.95rem; background: #fff; color: var(--text);
+  }
+  form input:focus, form select:focus { outline: 2px solid var(--client); outline-offset: 1px; }
+  .error-text { color: var(--danger-dark); font-size: 0.8rem; margin-top: 0.3rem; }
+  .campo.invalido input, .campo.invalido select { border-color: var(--danger); }
+
+  .banner {
+    padding: 0.85rem 1.1rem; border-radius: 8px; margin-bottom: 1.2rem;
+    font-size: 0.92rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+  }
+  .banner.exito { background: #e5f2e8; color: #2f5b3d; border: 1px solid #b9dcc2; }
+  .banner.info { background: #fdf3d9; color: #7a5c17; border: 1px solid #f1dfa1; }
+  .banner.error { background: #fbe8e8; color: #8a3b34; border: 1px solid #f0c2bd; }
+  .banner button { background: none; border: none; cursor: pointer; font-size: 1rem; color: inherit; }
+
+  .especialistas-grid { display: flex; flex-wrap: wrap; gap: 0.9rem; }
+  .esp-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.1rem; flex: 1 1 220px; }
+  .esp-card h3 { margin: 0 0 0.3rem; font-size: 1rem; }
+  .esp-card p { margin: 0.15rem 0; font-size: 0.85rem; color: var(--text-muted); }
+  .esp-card .esp-badge { display:inline-block; background:#eef0e9; color:var(--text-muted); font-size:0.72rem; padding:0.1rem 0.5rem; border-radius:10px; margin-top:0.4rem; }
+  .spinner { display:inline-block; width:14px; height:14px; border:2px solid rgba(0,0,0,0.15); border-top-color: var(--client); border-radius:50%; animation: girar 0.7s linear infinite; margin-right:0.5rem; vertical-align:middle; }
+  @keyframes girar { to { transform: rotate(360deg); } }
+  .fuente-nota { font-size: 0.78rem; color: var(--text-muted); margin: -0.6rem 0 1.1rem; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  th, td { text-align: left; padding: 0.6rem 0.5rem; border-bottom: 1px solid var(--border); }
+  th { color: var(--text-muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; }
+  tr:last-child td { border-bottom: none; }
+
+  .badge { display: inline-block; padding: 0.22rem 0.6rem; border-radius: 20px; font-size: 0.76rem; font-weight: 700; color: #fff; }
+  .badge.Confirmada { background: var(--ok); }
+  .badge.Pendiente { background: var(--pending); }
+  .badge.Cancelada { background: var(--cancel); }
+
+  .row-actions { display: flex; gap: 0.4rem; }
+
+  .stats-grid { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-bottom: 1.4rem; }
+  .stat-card { background: var(--admin); color: #fff; border-radius: 10px; padding: 1rem; text-align: center; flex: 1 1 150px; }
+  .stat-card .num { font-size: 1.7rem; font-weight: 800; }
+  .stat-card .lbl { font-size: 0.76rem; opacity: 0.9; }
+
+  .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; gap: 1rem; flex-wrap: wrap; }
+  .toolbar select { padding: 0.4rem 0.6rem; border-radius: 7px; border: 1px solid var(--border); }
+
+  .empty { color: var(--text-muted); font-style: italic; padding: 1rem 0; }
+  footer.app-footer { text-align: center; padding: 1rem; font-size: 0.78rem; color: var(--text-muted); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/plain" id="app-source">
+const { useState, useEffect } = React;
+
+// Dirección de la API (se define en config.js)
+const API_URL = window.SPATIME_API_URL;
+
+// Datos simulados (servicios y horarios; las reservas vienen del backend)
+const SERVICIOS = [
+  { id: "masaje", nombre: "Masaje relajante", descripcion: "Masaje corporal completo para liberar tensiones.", duracion: "60 minutos", precio: 150000 },
+  { id: "facial", nombre: "Limpieza facial", descripcion: "Tratamiento profundo para piel radiante.", duracion: "45 minutos", precio: 120000 },
+  { id: "corporal", nombre: "Tratamiento corporal", descripcion: "Exfoliación e hidratación corporal completa.", duracion: "75 minutos", precio: 180000 },
+];
+
+const HORARIOS = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"];
+
+function nombreServicio(id) {
+  const s = SERVICIOS.find((x) => x.id === id);
+  return s ? s.nombre : id;
+}
+
+function formatoGs(n) {
+  return "Gs. " + n.toLocaleString("es-PY");
+}
+
+// Validación del formulario (lado cliente)
+function validarReserva(form) {
+  const errores = {};
+
+  if (!form.servicioId) errores.servicioId = "Seleccioná un servicio.";
+
+  if (!form.fecha) {
+    errores.fecha = "Seleccioná una fecha.";
+  } else {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const fechaSel = new Date(form.fecha + "T00:00:00");
+    if (fechaSel < hoy) errores.fecha = "La fecha no puede ser anterior a hoy.";
+  }
+
+  if (!form.hora) errores.hora = "Seleccioná un horario.";
+
+  if (!form.cliente || form.cliente.trim().length < 3) {
+    errores.cliente = "Ingresá tu nombre completo (mínimo 3 caracteres).";
+  }
+
+  if (!form.telefono) {
+    errores.telefono = "Ingresá tu número de teléfono.";
+  } else if (!/^[0-9+ -]{6,}$/.test(form.telefono)) {
+    errores.telefono = "El teléfono debe contener solo números (mínimo 6 dígitos).";
+  }
+
+  if (!form.correo) {
+    errores.correo = "Ingresá tu correo electrónico.";
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.correo)) {
+    errores.correo = "El formato del correo no es válido.";
+  }
+
+  return errores;
+}
+
+// Navbar
+function Navbar({ screen, onNavigate }) {
+  const esAdmin = screen === "admin";
+  const links = [
+    ["inicio", "Inicio"],
+    ["servicios", "Servicios"],
+    ["especialistas", "Especialistas"],
+    ["reserva", "Reservar"],
+    ["misReservas", "Mis reservas"],
+  ];
+  return (
+    <div className={"navbar" + (esAdmin ? " zona-admin" : "")}>
+      <span className="logo">SpaTime</span>
+      <nav>
+        {links.map(([key, label]) => (
+          <button
+            key={key}
+            className={"navlink" + (screen === key ? " active" : "")}
+            onClick={() => onNavigate(key)}
+          >
+            {label}
+          </button>
+        ))}
+        <button
+          className={"navlink admin-link" + (screen === "admin" ? " active" : "")}
+          onClick={() => onNavigate("admin")}
+        >
+          Panel Admin
+        </button>
+      </nav>
+    </div>
+  );
+}
+
+// Pantalla 1 — Inicio
+function PantallaInicio({ onNavigate }) {
+  return (
+    <main>
+      <div className="hero">
+        <h1>SpaTime</h1>
+        <p className="subtitle">Tu momento de relax te espera. Reservá tu cita en segundos.</p>
+        <div className="hero-actions">
+          <button className="btn btn-sage" onClick={() => onNavigate("servicios")}>
+            Ver servicios
+          </button>
+          <button className="btn btn-client" onClick={() => onNavigate("reserva")}>
+            Reservar ahora
+          </button>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+// Pantalla 2 — Servicios
+function PantallaServicios({ onReservarServicio }) {
+  return (
+    <main>
+      <h2>Nuestros Servicios</h2>
+      {SERVICIOS.map((s) => (
+        <div className="card servicio-card" key={s.id}>
+          <div>
+            <h3>{s.nombre}</h3>
+            <p>{s.descripcion}</p>
+            <div className="servicio-meta">{s.duracion}</div>
+            <div className="servicio-precio">{formatoGs(s.precio)}</div>
+          </div>
+          <button className="btn btn-client" onClick={() => onReservarServicio(s.id)}>
+            Reservar
+          </button>
+        </div>
+      ))}
+    </main>
+  );
+}
+
+// Pantalla Especialistas: consume una API con fetch()
+// API de prueba; con el backend propio solo cambia la URL.
+const URL_ESPECIALISTAS = "https://jsonplaceholder.typicode.com/users";
+const URL_ESPECIALISTAS_ERROR = "https://jsonplaceholder.typicode.com/especialistas-no-existe";
+
+function PantallaEspecialistas() {
+  const [estado, setEstado] = useState("cargando"); // 'cargando' | 'exito' | 'error'
+  const [especialistas, setEspecialistas] = useState([]);
+  const [mensajeError, setMensajeError] = useState("");
+
+  function esperar(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  function cargar(url) {
+    setEstado("cargando");
+    // Espera mínima para que se vea el estado de carga (la API responde muy rápido)
+    Promise.all([fetch(url), esperar(700)])
+      .then(([response]) => {
+        if (!response.ok) {
+          throw new Error("El servidor respondió con error " + response.status + ".");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        setEspecialistas(data);
+        setEstado("exito");
+      })
+      .catch((error) => {
+        setMensajeError(error.message || "No se pudo conectar con el servicio.");
+        setEstado("error");
+      });
+  }
+
+  useEffect(() => {
+    cargar(URL_ESPECIALISTAS);
+  }, []);
+
+  return (
+    <main>
+      <h2>Nuestros Especialistas</h2>
+      <p className="fuente-nota">
+        Datos obtenidos en tiempo real mediante fetch() desde una API pública de prueba (JSONPlaceholder),
+        a modo de demostración técnica — se reemplazará por GET /especialistas cuando exista el backend propio.
+      </p>
+
+      <div className="toolbar">
+        <strong>Personal disponible</strong>
+        <div className="row-actions">
+          <button className="btn btn-outline btn-sm" onClick={() => cargar(URL_ESPECIALISTAS)}>Recargar</button>
+          <button className="btn btn-outline btn-sm" onClick={() => cargar(URL_ESPECIALISTAS_ERROR)}>Simular error</button>
+        </div>
+      </div>
+
+      {estado === "cargando" && (
+        <div className="banner info"><span><span className="spinner"></span>Cargando especialistas...</span></div>
+      )}
+
+      {estado === "error" && (
+        <div className="banner error">
+          <span>⚠ No se pudo obtener la lista de especialistas. {mensajeError}</span>
+          <button onClick={() => cargar(URL_ESPECIALISTAS)}>Reintentar</button>
+        </div>
+      )}
+
+      {estado === "exito" && (
+        <div className="especialistas-grid">
+          {especialistas.slice(0, 8).map((e) => (
+            <div className="esp-card" key={e.id}>
+              <h3>{e.name}</h3>
+              <p>{e.email}</p>
+              <p>{e.phone}</p>
+              <span className="esp-badge">Ficha #{e.id}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </main>
+  );
+}
+
+// Pantalla 3 — Nueva Reserva
+function PantallaNuevaReserva({ servicioInicial, reservaEnEdicion, onGuardar, onCancelarEdicion }) {
+  const base = reservaEnEdicion || {
+    servicioId: servicioInicial || "",
+    fecha: "",
+    hora: "",
+    cliente: "",
+    telefono: "",
+    correo: "",
+  };
+  const [form, setForm] = useState(base);
+  const [errores, setErrores] = useState({});
+  const [errorServidor, setErrorServidor] = useState("");
+  const [enviando, setEnviando] = useState(false);
+
+  function actualizarCampo(campo, valor) {
+    setForm((f) => ({ ...f, [campo]: valor }));
+  }
+
+  async function manejarSubmit(e) {
+    e.preventDefault();
+    setErrorServidor("");
+    const erroresEncontrados = validarReserva(form);
+    setErrores(erroresEncontrados);
+    if (Object.keys(erroresEncontrados).length > 0) return;
+
+    setEnviando(true);
+    const resultado = await onGuardar(form);
+    // Si salió bien, la app cambia de pantalla; si no, mostramos lo que respondió el servidor
+    if (!resultado.ok) {
+      setEnviando(false);
+      setErrores(resultado.errores || {});
+      setErrorServidor(resultado.mensaje);
+    }
+  }
+
+  return (
+    <main>
+      <h2>{reservaEnEdicion ? "Modificar Reserva" : "Nueva Reserva"}</h2>
+
+      {errorServidor && (
+        <div className="banner error"><span>⚠ {errorServidor}</span></div>
+      )}
+
+      <form className="card" onSubmit={manejarSubmit} noValidate>
+        <div className={"campo" + (errores.servicioId ? " invalido" : "")}>
+          <label>Servicio</label>
+          <select value={form.servicioId} onChange={(e) => actualizarCampo("servicioId", e.target.value)}>
+            <option value="">Seleccionar servicio...</option>
+            {SERVICIOS.map((s) => (
+              <option key={s.id} value={s.id}>{s.nombre}</option>
+            ))}
+          </select>
+          {errores.servicioId && <div className="error-text">{errores.servicioId}</div>}
+        </div>
+
+        <div className={"campo" + (errores.fecha ? " invalido" : "")}>
+          <label>Fecha</label>
+          <input type="date" value={form.fecha} onChange={(e) => actualizarCampo("fecha", e.target.value)} />
+          {errores.fecha && <div className="error-text">{errores.fecha}</div>}
+        </div>
+
+        <div className={"campo" + (errores.hora ? " invalido" : "")}>
+          <label>Horario</label>
+          <select value={form.hora} onChange={(e) => actualizarCampo("hora", e.target.value)}>
+            <option value="">Seleccionar horario...</option>
+            {HORARIOS.map((h) => (
+              <option key={h} value={h}>{h}</option>
+            ))}
+          </select>
+          {errores.hora && <div className="error-text">{errores.hora}</div>}
+        </div>
+
+        <div className={"campo" + (errores.cliente ? " invalido" : "")}>
+          <label>Cliente - Nombre</label>
+          <input type="text" placeholder="Ingrese su nombre" value={form.cliente}
+                 onChange={(e) => actualizarCampo("cliente", e.target.value)} />
+          {errores.cliente && <div className="error-text">{errores.cliente}</div>}
+        </div>
+
+        <div className={"campo" + (errores.telefono ? " invalido" : "")}>
+          <label>Teléfono</label>
+          <input type="text" placeholder="Ingrese su número" value={form.telefono}
+                 onChange={(e) => actualizarCampo("telefono", e.target.value)} />
+          {errores.telefono && <div className="error-text">{errores.telefono}</div>}
+        </div>
+
+        <div className={"campo" + (errores.correo ? " invalido" : "")}>
+          <label>Correo electrónico</label>
+          <input type="email" placeholder="nombre@correo.com" value={form.correo}
+                 onChange={(e) => actualizarCampo("correo", e.target.value)} />
+          {errores.correo && <div className="error-text">{errores.correo}</div>}
+        </div>
+
+        <div className="row-actions">
+          <button type="submit" className="btn btn-client" disabled={enviando}>
+            {enviando ? "Enviando..." : reservaEnEdicion ? "Guardar cambios" : "Confirmar reserva"}
+          </button>
+          {reservaEnEdicion && (
+            <button type="button" className="btn btn-outline" onClick={onCancelarEdicion}>
+              Cancelar edición
+            </button>
+          )}
+        </div>
+      </form>
+    </main>
+  );
+}
+
+// Muestra "cargando" o el error de la solicitud; si salió bien, muestra el contenido
+function CargaReservas({ estado, error, onReintentar, children }) {
+  if (estado === "cargando") {
+    return <div className="banner info"><span><span className="spinner"></span>Cargando reservas...</span></div>;
+  }
+  if (estado === "error") {
+    return (
+      <div className="banner error">
+        <span>⚠ No se pudieron obtener las reservas. {error}</span>
+        <button onClick={onReintentar}>Reintentar</button>
+      </div>
+    );
+  }
+  return children;
+}
+
+// Pantalla 4 — Mis Reservas
+function PantallaMisReservas({ reservas, estadoCarga, errorCarga, onReintentar, onModificar, onCancelar }) {
+  return (
+    <main>
+      <h2>Mis Reservas</h2>
+      <p className="fuente-nota">Datos guardados en la base de datos (SQLite) y obtenidos con GET /api/reservas</p>
+      <CargaReservas estado={estadoCarga} error={errorCarga} onReintentar={onReintentar}>
+        <div className="card">
+          {reservas.length === 0 ? (
+            <p className="empty">Todavía no tenés reservas registradas.</p>
+          ) : (
+            <table>
+              <thead>
+                <tr>
+                  <th>Servicio</th><th>Fecha</th><th>Hora</th><th>Estado</th><th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {reservas.map((r) => (
+                  <tr key={r.id}>
+                    <td>{nombreServicio(r.servicioId)}</td>
+                    <td>{r.fecha}</td>
+                    <td>{r.hora}</td>
+                    <td><span className={"badge " + r.estado}>{r.estado}</span></td>
+                    <td>
+                      <div className="row-actions">
+                        <button className="btn btn-sage btn-sm" disabled={r.estado === "Cancelada"}
+                                onClick={() => onModificar(r.id)}>
+                          Modificar
+                        </button>
+                        <button className="btn btn-danger btn-sm" disabled={r.estado === "Cancelada"}
+                                onClick={() => onCancelar(r.id)}>
+                          Cancelar
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </CargaReservas>
+    </main>
+  );
+}
+
+// Pantalla 5 — Panel Administrativo
+function PantallaAdmin({ reservas, estadoCarga, errorCarga, onReintentar, onConfirmar }) {
+  const [filtro, setFiltro] = useState("Todas");
+
+  const total = reservas.length;
+  const pendientes = reservas.filter((r) => r.estado === "Pendiente").length;
+  const confirmadas = reservas.filter((r) => r.estado === "Confirmada").length;
+
+  const visibles = filtro === "Todas" ? reservas : reservas.filter((r) => r.estado === filtro);
+
+  return (
+    <main>
+      <h2>Panel de Administración</h2>
+
+      <CargaReservas estado={estadoCarga} error={errorCarga} onReintentar={onReintentar}>
+        <div className="stats-grid">
+          <div className="stat-card"><div className="num">{total}</div><div className="lbl">Total reservas</div></div>
+          <div className="stat-card"><div className="num">{pendientes}</div><div className="lbl">Pendientes</div></div>
+          <div className="stat-card"><div className="num">{confirmadas}</div><div className="lbl">Confirmadas</div></div>
+          <div className="stat-card"><div className="num">{SERVICIOS.length}</div><div className="lbl">Servicios</div></div>
+        </div>
+
+        <div className="toolbar">
+          <strong>Reservas registradas</strong>
+          <select value={filtro} onChange={(e) => setFiltro(e.target.value)}>
+            <option>Todas</option>
+            <option>Pendiente</option>
+            <option>Confirmada</option>
+            <option>Cancelada</option>
+          </select>
+        </div>
+
+        <div className="card">
+          {visibles.length === 0 ? (
+            <p className="empty">No hay reservas para este filtro.</p>
+          ) : (
+            <table>
+              <thead>
+                <tr><th>Cliente</th><th>Servicio</th><th>Fecha</th><th>Hora</th><th>Estado</th><th></th></tr>
+              </thead>
+              <tbody>
+                {visibles.map((r) => (
+                  <tr key={r.id}>
+                    <td>{r.cliente}</td>
+                    <td>{nombreServicio(r.servicioId)}</td>
+                    <td>{r.fecha}</td>
+                    <td>{r.hora}</td>
+                    <td><span className={"badge " + r.estado}>{r.estado}</span></td>
+                    <td>
+                      {r.estado === "Pendiente" && (
+                        <button className="btn btn-admin btn-sm" onClick={() => onConfirmar(r.id)}>
+                          Confirmar
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </CargaReservas>
+    </main>
+  );
+}
+
+// App: navegación y estado compartido
+function App() {
+  const [screen, setScreen] = useState("inicio");
+  const [reservas, setReservas] = useState([]);
+  const [estadoReservas, setEstadoReservas] = useState("cargando"); // 'cargando' | 'exito' | 'error'
+  const [errorReservas, setErrorReservas] = useState("");
+  const [servicioPreseleccionado, setServicioPreseleccionado] = useState("");
+  const [idEnEdicion, setIdEnEdicion] = useState(null);
+  const [aviso, setAviso] = useState(null);
+
+  // GET /api/reservas
+  function cargarReservas() {
+    setEstadoReservas("cargando");
+    fetch(API_URL + "/reservas")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("El servidor respondió con error " + response.status + ".");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        setReservas(data);
+        setEstadoReservas("exito");
+      })
+      .catch((error) => {
+        // TypeError: el backend no está iniciado o no se pudo alcanzar
+        setErrorReservas(
+          error instanceof TypeError ? "No se pudo conectar con el backend (¿está iniciado?)." : error.message
+        );
+        setEstadoReservas("error");
+      });
+  }
+
+  useEffect(() => {
+    cargarReservas();
+  }, []);
+
+  function irA(pantalla) {
+    setScreen(pantalla);
+    if (pantalla !== "reserva") {
+      setIdEnEdicion(null);
+      setServicioPreseleccionado("");
+    }
+  }
+
+  function reservarServicio(servicioId) {
+    setServicioPreseleccionado(servicioId);
+    setIdEnEdicion(null);
+    setScreen("reserva");
+  }
+
+  // Devuelve { ok: true } o { ok: false, mensaje, errores } para que el formulario lo muestre
+  async function guardarReserva(datosForm) {
+    if (idEnEdicion) {
+      // Modificar, Cancelar y Confirmar todavía actúan solo en el navegador (faltan PUT/PATCH)
+      setReservas((prev) => prev.map((r) => (r.id === idEnEdicion ? { ...r, ...datosForm } : r)));
+      setAviso({ tipo: "exito", texto: "La reserva se actualizó correctamente." });
+      setIdEnEdicion(null);
+      setScreen("misReservas");
+      return { ok: true };
+    }
+
+    // POST /api/reservas
+    try {
+      const respuesta = await fetch(API_URL + "/reservas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datosForm),
+      });
+      const cuerpo = await respuesta.json();
+
+      if (!respuesta.ok) {
+        return {
+          ok: false,
+          mensaje: cuerpo.error || "No se pudo registrar la reserva.",
+          errores: cuerpo.detalles || {},
+        };
+      }
+
+      if (estadoReservas === "exito") {
+        setReservas((prev) => [...prev, cuerpo]);
+      } else {
+        cargarReservas();
+      }
+      setAviso({ tipo: "exito", texto: "¡Reserva registrada! La podés ver en \u201cMis reservas\u201d." });
+      setScreen("misReservas");
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, mensaje: "No se pudo conectar con el backend (¿está iniciado?).", errores: {} };
+    }
+  }
+
+  function modificarReserva(id) {
+    setIdEnEdicion(id);
+    setScreen("reserva");
+  }
+
+  function cancelarReserva(id) {
+    const ok = window.confirm("¿Seguro que querés cancelar esta reserva?");
+    if (!ok) return;
+    setReservas((prev) => prev.map((r) => (r.id === id ? { ...r, estado: "Cancelada" } : r)));
+    setAviso({ tipo: "info", texto: "La reserva fue cancelada." });
+  }
+
+  function confirmarReserva(id) {
+    setReservas((prev) => prev.map((r) => (r.id === id ? { ...r, estado: "Confirmada" } : r)));
+  }
+
+  const reservaEnEdicion = idEnEdicion ? reservas.find((r) => r.id === idEnEdicion) : null;
+
+  return (
+    <React.Fragment>
+      <Navbar screen={screen} onNavigate={irA} />
+
+      {aviso && screen !== "reserva" && (
+        <div style={{ maxWidth: 880, margin: "1.2rem auto 0", padding: "0 1.6rem" }}>
+          <div className={"banner " + (aviso.tipo === "exito" ? "exito" : "info")}>
+            <span>{aviso.texto}</span>
+            <button onClick={() => setAviso(null)}>✕</button>
+          </div>
+        </div>
+      )}
+
+      {screen === "inicio" && <PantallaInicio onNavigate={irA} />}
+      {screen === "servicios" && <PantallaServicios onReservarServicio={reservarServicio} />}
+      {screen === "especialistas" && <PantallaEspecialistas />}
+      {screen === "reserva" && (
+        <PantallaNuevaReserva
+          servicioInicial={servicioPreseleccionado}
+          reservaEnEdicion={reservaEnEdicion}
+          onGuardar={guardarReserva}
+          onCancelarEdicion={() => irA("misReservas")}
+        />
+      )}
+      {screen === "misReservas" && (
+        <PantallaMisReservas
+          reservas={reservas}
+          estadoCarga={estadoReservas}
+          errorCarga={errorReservas}
+          onReintentar={cargarReservas}
+          onModificar={modificarReserva}
+          onCancelar={cancelarReserva}
+        />
+      )}
+      {screen === "admin" && (
+        <PantallaAdmin
+          reservas={reservas}
+          estadoCarga={estadoReservas}
+          errorCarga={errorReservas}
+          onReintentar={cargarReservas}
+          onConfirmar={confirmarReserva}
+        />
+      )}
+
+      <footer className="app-footer">SpaTime — Versión final · Reservas guardadas en base de datos SQLite</footer>
+    </React.Fragment>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+</script>
+
+<script>
+  // Compila el JSX en modo "classic" (sin bundler)
+  var codigoFuente = document.getElementById("app-source").textContent;
+  var resultado = Babel.transform(codigoFuente, {
+    presets: [["react", { runtime: "classic" }]],
+  }).code;
+  (0, eval)(resultado);
+</script>
+</body>
+</html>

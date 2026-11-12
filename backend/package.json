@@ -1,0 +1,21 @@
+{
+  "name": "spatime-backend",
+  "version": "1.0.0",
+  "description": "Backend de SpaTime: API de reservas con persistencia en SQLite",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning src/server.js",
+    "test": "node --disable-warning=ExperimentalWarning --test",
+    "ver-datos": "node --disable-warning=ExperimentalWarning scripts/ver-datos.js",
+    "reiniciar-bd": "node --disable-warning=ExperimentalWarning scripts/reiniciar-bd.js",
+    "ver-esquema": "node --disable-warning=ExperimentalWarning scripts/ver-esquema.js"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=22.13 <25"
+  }
+}

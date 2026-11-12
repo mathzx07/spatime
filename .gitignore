@@ -1,0 +1,15 @@
+# Dependencias
+node_modules/
+
+# Base de datos local (se crea sola al iniciar el backend)
+backend/data/
+
+# Variables de entorno reales (nunca subirlas)
+.env
+backend/.env
+
+# Sistema y editor
+.DS_Store
+Thumbs.db
+.vscode/
+*.log

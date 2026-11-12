@@ -1,0 +1,14 @@
+# Despliegue en Render (Blueprint). Un único servicio: el backend entrega la API y el frontend.
+services:
+  - type: web
+    name: spatime
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/salud
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 22.22.0
