@@ -6,9 +6,10 @@ Aplicación web para reservar servicios de un spa. Proyecto final de **Desarroll
 
 | | |
 |---|---|
-| Aplicación publicada | COMPLETAR_URL_APLICACION |
-| API publicada | COMPLETAR_URL_APLICACION/api/reservas |
-| Estado del servicio | COMPLETAR_URL_APLICACION/api/salud |
+| Repositorio | https://github.com/mathzx07/spatime |
+| Aplicación publicada | https://spatime.onrender.com |
+| API publicada | https://spatime.onrender.com/api/reservas |
+| Estado del servicio | https://spatime.onrender.com/api/salud |
 
 ## Propósito
 
@@ -134,7 +135,7 @@ Valores válidos: `servicioId` = `masaje`, `facial` o `corporal`; `hora` = `09:0
 
 **Local:** <http://localhost:3000>
 
-**Publicado:** COMPLETAR_URL_APLICACION
+**Publicado:** https://spatime.onrender.com
 
 El frontend publicado usa la dirección del backend desplegado: `frontend/config.js` apunta a `/api` en la misma dirección, no a `localhost`.
 
